@@ -1,7 +1,7 @@
 // API Endpoint - 環境に応じて自動切替
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'  // ローカル開発環境
-    : 'https://x-bot-analyzer.onrender.com';  // 本番環境（Render）
+    : 'https://x-bot-analyzer.fly.dev';  // 本番環境（Fly.io）
 
 let currentAnalysis = null;
 
