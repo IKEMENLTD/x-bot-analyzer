@@ -50,8 +50,21 @@ class TwitterScraper:
             print(f'[SCRAPER] Accessing: {url}')
             self.driver.get(url)
 
-            # ページ読み込み待機
-            time.sleep(3)
+            # ページ読み込み待機（延長）
+            print('[SCRAPER] Waiting for page to load...')
+            time.sleep(5)
+
+            # ログイン画面が表示されているかチェック
+            try:
+                login_button = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'ログイン') or contains(text(), 'Log in')]")
+                if login_button:
+                    print('[SCRAPER WARNING] Login page detected. Twitter may require authentication.')
+                    # それでも試してみる
+            except:
+                pass
+
+            # ページソースのデバッグ出力
+            print('[SCRAPER] Page title:', self.driver.title)
 
             # アカウント情報を取得
             account_info = self._extract_account_info()
@@ -66,6 +79,8 @@ class TwitterScraper:
 
         except Exception as e:
             print(f'[SCRAPER ERROR] {str(e)}')
+            import traceback
+            traceback.print_exc()
             raise
         finally:
             if self.driver:
@@ -116,19 +131,48 @@ class TwitterScraper:
         scroll_attempts = 0
         max_scroll_attempts = 20
 
+        print(f'[SCRAPER] Starting tweet extraction (max: {max_tweets})...')
+
+        # 最初のツイートが読み込まれるまで待機
+        try:
+            wait = WebDriverWait(self.driver, 10)
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'article')))
+            print('[SCRAPER] First article element detected')
+        except Exception as e:
+            print(f'[SCRAPER WARNING] Timeout waiting for articles: {e}')
+
         while len(tweets) < max_tweets and scroll_attempts < max_scroll_attempts:
             try:
-                # ツイート要素を取得
+                # ツイート要素を取得（複数のセレクタを試す）
                 tweet_elements = self.driver.find_elements(By.CSS_SELECTOR, 'article[data-testid="tweet"]')
 
-                for elem in tweet_elements:
+                if not tweet_elements:
+                    # 代替セレクタを試す
+                    tweet_elements = self.driver.find_elements(By.TAG_NAME, 'article')
+                    print(f'[SCRAPER] Using fallback selector, found {len(tweet_elements)} articles')
+                else:
+                    print(f'[SCRAPER] Found {len(tweet_elements)} tweet elements with data-testid')
+
+                for idx, elem in enumerate(tweet_elements):
                     if len(tweets) >= max_tweets:
                         break
 
                     try:
-                        # ツイートテキスト
-                        text_elem = elem.find_element(By.CSS_SELECTOR, '[data-testid="tweetText"]')
-                        text = text_elem.text
+                        # ツイートテキスト（複数のセレクタを試す）
+                        text = None
+                        try:
+                            text_elem = elem.find_element(By.CSS_SELECTOR, '[data-testid="tweetText"]')
+                            text = text_elem.text
+                        except:
+                            # 代替セレクタ
+                            try:
+                                text_elem = elem.find_element(By.CSS_SELECTOR, 'div[lang]')
+                                text = text_elem.text
+                            except:
+                                pass
+
+                        if not text:
+                            continue
 
                         # 投稿日時
                         try:
@@ -143,25 +187,30 @@ class TwitterScraper:
                                 'text': text,
                                 'date': date
                             })
+                            print(f'[SCRAPER] Tweet #{len(tweets)}: {text[:50]}...')
 
                     except Exception as e:
+                        print(f'[SCRAPER] Error extracting tweet #{idx}: {e}')
                         continue
 
                 # スクロール
                 self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
-                time.sleep(2)
+                time.sleep(3)  # スクロール待機を延長
 
                 new_height = self.driver.execute_script('return document.body.scrollHeight')
                 if new_height == last_height:
                     scroll_attempts += 1
+                    print(f'[SCRAPER] No new content after scroll (attempt {scroll_attempts}/{max_scroll_attempts})')
                 else:
                     scroll_attempts = 0
                 last_height = new_height
 
-                print(f'[SCRAPER] Collected {len(tweets)} tweets...')
+                print(f'[SCRAPER] Progress: {len(tweets)}/{max_tweets} tweets collected')
 
             except Exception as e:
                 print(f'[SCRAPER] Error during scrolling: {e}')
+                import traceback
+                traceback.print_exc()
                 break
 
         print(f'[SCRAPER] Total tweets collected: {len(tweets)}')
