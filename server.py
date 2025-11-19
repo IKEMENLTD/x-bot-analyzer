@@ -7,11 +7,15 @@ from analyzer import BotAnalyzer
 app = Flask(__name__)
 CORS(app)  # フロントエンドからのアクセスを許可
 
-# Claude API Keyの設定
+# AI API Keyの設定（Geminiを優先）
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY', '')
 
+# どちらかのAPIキーを使用（Geminiを優先）
+API_KEY = GEMINI_API_KEY or CLAUDE_API_KEY
+
 scraper = TwitterScraper()
-analyzer = BotAnalyzer(CLAUDE_API_KEY)
+analyzer = BotAnalyzer(API_KEY)
 
 @app.route('/')
 def index():
@@ -108,11 +112,14 @@ if __name__ == '__main__':
     print('X Account Bot Analyzer API Server')
     print('='*60)
 
-    if not CLAUDE_API_KEY:
-        print('[WARNING] CLAUDE_API_KEY環境変数が設定されていません')
-        print('[WARNING] AI分析機能が制限されます')
-    else:
+    if GEMINI_API_KEY:
+        print('[INFO] Gemini API Key: OK (優先)')
+    elif CLAUDE_API_KEY:
         print('[INFO] Claude API Key: OK')
+    else:
+        print('[WARNING] API Key が設定されていません')
+        print('[WARNING] GEMINI_API_KEY (推奨・無料) または CLAUDE_API_KEY を設定してください')
+        print('[WARNING] AI分析機能はルールベースのみで動作します')
 
     print('[INFO] Starting server on http://localhost:5000')
     print('='*60)

@@ -1,14 +1,63 @@
-import anthropic
+import os
 from datetime import datetime
 import statistics
 import re
 
+# AI APIクライアント
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+
+
 class BotAnalyzer:
-    def __init__(self, api_key):
+    def __init__(self, api_key=None, api_type='auto'):
+        """
+        APIキーとタイプを指定してアナライザーを初期化
+
+        api_type: 'gemini', 'claude', 'auto'（自動検出）
+        """
         self.api_key = api_key
+        self.api_type = api_type
         self.client = None
-        if api_key:
-            self.client = anthropic.Anthropic(api_key=api_key)
+
+        if not api_key:
+            print('[ANALYZER] No API key provided. Rule-based analysis only.')
+            return
+
+        # API自動検出
+        if api_type == 'auto':
+            # Geminiを優先（無料なので）
+            if GEMINI_AVAILABLE:
+                self.api_type = 'gemini'
+            elif ANTHROPIC_AVAILABLE:
+                self.api_type = 'claude'
+            else:
+                print('[ANALYZER] No AI libraries available.')
+                return
+
+        # クライアント初期化
+        if self.api_type == 'gemini' and GEMINI_AVAILABLE:
+            try:
+                genai.configure(api_key=api_key)
+                self.client = genai.GenerativeModel('gemini-1.5-flash')
+                print('[ANALYZER] Using Google Gemini API')
+            except Exception as e:
+                print(f'[ANALYZER] Gemini initialization error: {e}')
+
+        elif self.api_type == 'claude' and ANTHROPIC_AVAILABLE:
+            try:
+                self.client = anthropic.Anthropic(api_key=api_key)
+                print('[ANALYZER] Using Claude API')
+            except Exception as e:
+                print(f'[ANALYZER] Claude initialization error: {e}')
 
     def analyze_tweets(self, tweets, account_info=None):
         """
@@ -23,7 +72,7 @@ class BotAnalyzer:
         comm_score = self._analyze_communication(tweets)
         emotion_score = self._analyze_emotion_expression(tweets)
 
-        # 2. AI分析（Claude APIが利用可能な場合）
+        # 2. AI分析（APIが利用可能な場合）
         ai_summary = ''
         ai_score_adjustment = 0
 
@@ -32,7 +81,7 @@ class BotAnalyzer:
             ai_summary = ai_result['summary']
             ai_score_adjustment = ai_result['score_adjustment']
         else:
-            ai_summary = 'AI分析は利用できません。CLAUDE_API_KEY環境変数を設定してください。'
+            ai_summary = 'AI分析は利用できません。GEMINI_API_KEY または CLAUDE_API_KEY 環境変数を設定してください。'
 
         # 3. 総合スコア計算
         base_score = (
@@ -222,7 +271,7 @@ class BotAnalyzer:
 
     def _ai_deep_analysis(self, tweets, account_info):
         """
-        Claude APIを使った高度な分析
+        AI APIを使った高度な分析（Gemini または Claude）
         """
         if not self.client:
             return {'summary': 'AI分析は利用できません', 'score_adjustment': 0}
@@ -235,8 +284,8 @@ class BotAnalyzer:
             prompt = f"""以下のX（Twitter）アカウントの投稿を分析し、このアカウントが人間によって運用されているか、BOTによって運用されているかを判定してください。
 
 アカウント情報:
-- 名前: {account_info.get('name', 'Unknown')}
-- ユーザー名: @{account_info.get('username', 'unknown')}
+- 名前: {account_info.get('name', 'Unknown') if account_info else 'Unknown'}
+- ユーザー名: @{account_info.get('username', 'unknown') if account_info else 'unknown'}
 
 投稿サンプル（最新20件）:
 {tweet_texts}
@@ -256,15 +305,21 @@ class BotAnalyzer:
 総評: [ここに総評]
 スコア調整: [数値のみ]"""
 
-            message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=500,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
+            # APIタイプに応じて呼び出し
+            if self.api_type == 'gemini':
+                response = self.client.generate_content(prompt)
+                response_text = response.text
 
-            response_text = message.content[0].text
+            elif self.api_type == 'claude':
+                message = self.client.messages.create(
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=500,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                response_text = message.content[0].text
+
+            else:
+                return {'summary': 'サポートされていないAPI', 'score_adjustment': 0}
 
             # レスポンスをパース
             summary_match = re.search(r'総評[：:]\s*(.+?)(?=スコア調整|$)', response_text, re.DOTALL)
@@ -283,6 +338,8 @@ class BotAnalyzer:
 
         except Exception as e:
             print(f'[ANALYZER] AI analysis error: {e}')
+            import traceback
+            traceback.print_exc()
             return {
                 'summary': f'AI分析でエラーが発生しました: {str(e)}',
                 'score_adjustment': 0
