@@ -1,8 +1,7 @@
 // API Endpoint - 環境に応じて自動切替
-// 本番環境: RenderのURLに変更してください
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'  // ローカル開発環境
-    : 'https://YOUR_RENDER_URL.onrender.com';  // 本番環境（Renderデプロイ後に変更）
+    : 'https://x-bot-analyzer.onrender.com';  // 本番環境（Render）
 
 let currentAnalysis = null;
 
