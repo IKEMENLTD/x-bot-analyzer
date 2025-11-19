@@ -47,7 +47,7 @@ class BotAnalyzer:
         if self.api_type == 'gemini' and GEMINI_AVAILABLE:
             try:
                 genai.configure(api_key=api_key)
-                self.client = genai.GenerativeModel('gemini-pro')
+                self.client = genai.GenerativeModel('gemini-2.5-flash')
                 print('[ANALYZER] Using Google Gemini API')
             except Exception as e:
                 print(f'[ANALYZER] Gemini initialization error: {e}')
