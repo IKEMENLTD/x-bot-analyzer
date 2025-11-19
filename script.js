@@ -54,11 +54,40 @@ function isValidTwitterUrl(url) {
     return patterns.some(pattern => pattern.test(url));
 }
 
+let progressInterval = null;
+
 function showLoading() {
     document.querySelector('.input-section').classList.add('hidden');
     document.getElementById('resultSection').classList.add('hidden');
     document.getElementById('errorSection').classList.add('hidden');
     document.getElementById('loadingSection').classList.remove('hidden');
+
+    // Reset progress
+    const progressFill = document.getElementById('progressFill');
+    const progressPercentage = document.getElementById('progressPercentage');
+    progressFill.style.width = '0%';
+    progressPercentage.textContent = '0%';
+
+    // Animate progress bar
+    let progress = 0;
+    if (progressInterval) clearInterval(progressInterval);
+
+    progressInterval = setInterval(() => {
+        if (progress < 25) {
+            progress += 1; // Fast initial progress (0-25%)
+        } else if (progress < 70) {
+            progress += 0.5; // Medium progress (25-70%)
+        } else if (progress < 95) {
+            progress += 0.2; // Slow progress (70-95%)
+        }
+
+        progressFill.style.width = progress + '%';
+        progressPercentage.textContent = Math.floor(progress) + '%';
+
+        if (progress >= 95) {
+            clearInterval(progressInterval);
+        }
+    }, 100);
 
     // Simulate progress steps
     setTimeout(() => document.getElementById('step1').classList.add('active'), 500);
@@ -67,8 +96,16 @@ function showLoading() {
 }
 
 function showResults(data) {
-    document.getElementById('loadingSection').classList.add('hidden');
-    document.getElementById('resultSection').classList.remove('hidden');
+    // Complete progress bar
+    if (progressInterval) clearInterval(progressInterval);
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressPercentage').textContent = '100%';
+
+    // Small delay to show 100% completion
+    setTimeout(() => {
+        document.getElementById('loadingSection').classList.add('hidden');
+        document.getElementById('resultSection').classList.remove('hidden');
+    }, 500);
 
     // Account info
     if (data.account) {
@@ -201,6 +238,9 @@ function formatDate(dateString) {
 }
 
 function showError(message) {
+    // Clear progress interval
+    if (progressInterval) clearInterval(progressInterval);
+
     document.querySelector('.input-section').classList.add('hidden');
     document.getElementById('loadingSection').classList.add('hidden');
     document.getElementById('resultSection').classList.add('hidden');
@@ -210,6 +250,9 @@ function showError(message) {
 }
 
 function resetAnalysis() {
+    // Clear progress interval
+    if (progressInterval) clearInterval(progressInterval);
+
     document.querySelector('.input-section').classList.remove('hidden');
     document.getElementById('loadingSection').classList.add('hidden');
     document.getElementById('resultSection').classList.add('hidden');
