@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# ChromeDriver
+chromedriver
+chromedriver.exe
+
+# Logs
+*.log
+
+# Vercel
+.vercel/
+
+# Node
+node_modules/
+
+# Documentation
+README.md
+DEPLOY.md
+使い方.txt
+デプロイ簡単ガイド.txt
+
+# Local scripts
+setup.bat
+start.bat
+open_browser.bat
+
+# Render specific
+render.yaml
+build.sh
