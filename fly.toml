@@ -37,4 +37,4 @@ primary_region = "nrt"  # Tokyo
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 1024
+  memory_mb = 2048

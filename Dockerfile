@@ -46,5 +46,5 @@ EXPOSE 8080
 ENV PORT=8080
 ENV PYTHONUNBUFFERED=1
 
-# Gunicornで起動
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "server:app"]
+# Gunicornで起動（タイムアウトを5分に延長）
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "4", "--timeout", "300", "--worker-class", "gthread", "--max-requests", "100", "--max-requests-jitter", "10", "server:app"]
