@@ -5,7 +5,22 @@ from scraper import TwitterScraper
 from analyzer import BotAnalyzer
 
 app = Flask(__name__)
-CORS(app)  # フロントエンドからのアクセスを許可
+
+# CORS設定：Vercelフロントエンドからのアクセスを許可
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://x-bot-analyzer.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5000",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5000"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 # AI API Keyの設定（Geminiを優先）
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
