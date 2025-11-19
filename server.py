@@ -6,19 +6,14 @@ from analyzer import BotAnalyzer
 
 app = Flask(__name__)
 
-# CORS設定：Vercelフロントエンドからのアクセスを許可
+# CORS設定：すべてのオリジンからのアクセスを許可
 CORS(app, resources={
     r"/*": {
-        "origins": [
-            "https://x-bot-analyzer.vercel.app",
-            "http://localhost:3000",
-            "http://localhost:5000",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5000"
-        ],
+        "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
-        "supports_credentials": True
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "max_age": 3600
     }
 })
 
