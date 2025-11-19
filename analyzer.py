@@ -47,8 +47,25 @@ class BotAnalyzer:
         if self.api_type == 'gemini' and GEMINI_AVAILABLE:
             try:
                 genai.configure(api_key=api_key)
-                self.client = genai.GenerativeModel('gemini-1.5-flash')
-                print('[ANALYZER] Using Google Gemini API (gemini-1.5-flash)')
+                # 複数のモデル名を試す
+                model_names = [
+                    'gemini-1.5-flash',
+                    'models/gemini-1.5-flash',
+                    'gemini-pro',
+                    'models/gemini-pro'
+                ]
+
+                for model_name in model_names:
+                    try:
+                        self.client = genai.GenerativeModel(model_name)
+                        print(f'[ANALYZER] Using Google Gemini API ({model_name})')
+                        break
+                    except Exception as model_error:
+                        print(f'[ANALYZER] Failed to initialize {model_name}: {model_error}')
+                        continue
+
+                if not self.client:
+                    print('[ANALYZER] All Gemini model names failed. Using rule-based analysis only.')
             except Exception as e:
                 print(f'[ANALYZER] Gemini initialization error: {e}')
 
