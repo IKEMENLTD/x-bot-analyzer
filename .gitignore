@@ -45,3 +45,4 @@ chromedriver.exe
 
 # Logs
 *.log
+.vercel
