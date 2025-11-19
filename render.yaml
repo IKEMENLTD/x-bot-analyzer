@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: x-bot-analyzer
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn server:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: CLAUDE_API_KEY
+        sync: false
+      - key: CHROME_BIN
+        value: /usr/bin/google-chrome
+      - key: CHROMEDRIVER_PATH
+        value: /usr/local/bin/chromedriver

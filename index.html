@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X アカウント分析ツール - 人間 or BOT 判定</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 X アカウント分析ツール</h1>
+            <p class="subtitle">そのアカウント、人間？それともBOT？</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <label for="accountUrl">X（Twitter）アカウントURLを入力：</label>
+                <div class="input-group">
+                    <input
+                        type="text"
+                        id="accountUrl"
+                        placeholder="例: https://x.com/username または https://twitter.com/username"
+                        autocomplete="off"
+                    >
+                    <button id="analyzeBtn" onclick="analyzeAccount()">
+                        <span id="btnText">分析開始</span>
+                        <span id="spinner" class="spinner hidden"></span>
+                    </button>
+                </div>
+                <p class="hint">※ 最新の投稿を分析して、人間かBOTかを判定します</p>
+            </div>
+
+            <div id="loadingSection" class="loading-section hidden">
+                <div class="loading-spinner"></div>
+                <p id="loadingText">アカウントを分析中...</p>
+                <div class="progress-steps">
+                    <div class="step" id="step1">
+                        <span class="step-icon">📡</span>
+                        <span class="step-text">投稿データ取得中</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <span class="step-icon">🔍</span>
+                        <span class="step-text">パターン分析中</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <span class="step-icon">🤖</span>
+                        <span class="step-text">AI解析中</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultSection" class="result-section hidden">
+                <div class="result-header">
+                    <h2>分析結果</h2>
+                    <div class="account-info">
+                        <img id="accountIcon" src="" alt="アイコン" class="account-icon">
+                        <div>
+                            <h3 id="accountName"></h3>
+                            <p id="accountHandle"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="score-container">
+                    <div class="score-circle">
+                        <svg viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="90" class="score-bg"></circle>
+                            <circle cx="100" cy="100" r="90" class="score-progress" id="scoreCircle"></circle>
+                        </svg>
+                        <div class="score-content">
+                            <div class="score-value" id="humanScore">--</div>
+                            <div class="score-label">人間度</div>
+                        </div>
+                    </div>
+                    <div class="verdict" id="verdict">
+                        <div class="verdict-icon" id="verdictIcon"></div>
+                        <div class="verdict-text" id="verdictText"></div>
+                    </div>
+                </div>
+
+                <div class="analysis-details">
+                    <h3>詳細分析</h3>
+
+                    <div class="detail-item">
+                        <div class="detail-header">
+                            <span class="detail-icon">⏰</span>
+                            <span class="detail-title">投稿パターン</span>
+                        </div>
+                        <div class="detail-content" id="patternAnalysis"></div>
+                        <div class="detail-score">
+                            <div class="score-bar">
+                                <div class="score-fill" id="patternScore"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-header">
+                            <span class="detail-icon">✍️</span>
+                            <span class="detail-title">文章の自然さ</span>
+                        </div>
+                        <div class="detail-content" id="textAnalysis"></div>
+                        <div class="detail-score">
+                            <div class="score-bar">
+                                <div class="score-fill" id="textScore"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-header">
+                            <span class="detail-icon">💬</span>
+                            <span class="detail-title">コミュニケーション</span>
+                        </div>
+                        <div class="detail-content" id="commAnalysis"></div>
+                        <div class="detail-score">
+                            <div class="score-bar">
+                                <div class="score-fill" id="commScore"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-header">
+                            <span class="detail-icon">🎭</span>
+                            <span class="detail-title">感情表現</span>
+                        </div>
+                        <div class="detail-content" id="emotionAnalysis"></div>
+                        <div class="detail-score">
+                            <div class="score-bar">
+                                <div class="score-fill" id="emotionScore"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-summary">
+                    <h3>🤖 AI総評</h3>
+                    <div class="summary-content" id="aiSummary"></div>
+                </div>
+
+                <div class="tweet-samples">
+                    <h3>📝 分析対象の投稿サンプル</h3>
+                    <div id="tweetList"></div>
+                </div>
+
+                <button class="btn-secondary" onclick="resetAnalysis()">別のアカウントを分析</button>
+            </div>
+
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-icon">⚠️</div>
+                <h3>エラーが発生しました</h3>
+                <p id="errorMessage"></p>
+                <button class="btn-secondary" onclick="resetAnalysis()">戻る</button>
+            </div>
+        </main>
+
+        <footer>
+            <p>このツールは投稿パターンとAI分析により、アカウントが人間によって運用されているかBOTによって運用されているかを推定します。</p>
+            <p class="disclaimer">※ 判定結果は参考値です。100%の精度を保証するものではありません。</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

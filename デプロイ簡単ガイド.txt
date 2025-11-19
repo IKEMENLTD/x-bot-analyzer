@@ -1,0 +1,171 @@
+========================================
+完全無料デプロイ - 簡単ガイド
+========================================
+
+このツールを完全無料でインターネット公開する手順です。
+
+
+■ 必要なもの
+━━━━━━━━━━━━━━━━━━━━━━
+
+1. GitHubアカウント（無料）
+   → https://github.com
+
+2. Renderアカウント（無料）
+   → https://render.com
+
+3. Vercelアカウント（無料）
+   → https://vercel.com
+
+4. Claude APIキー（オプション）
+   → https://console.anthropic.com/
+
+
+■ デプロイ手順（3ステップ）
+━━━━━━━━━━━━━━━━━━━━━━
+
+【ステップ1】GitHubにコードをアップロード
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. GitHubで新しいリポジトリを作成
+   - リポジトリ名: x-bot-analyzer（任意）
+   - Public を選択
+
+2. このフォルダで以下を実行（コマンドプロンプト）：
+
+   cd "C:\Users\music003\OneDrive\ドキュメント\プロジェクト\6億ニキ\このX人間か人間じゃないかチェッカー"
+
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/YOUR_USERNAME/x-bot-analyzer.git
+   git branch -M main
+   git push -u origin main
+
+   ※ YOUR_USERNAME は自分のGitHubユーザー名に変更
+
+
+【ステップ2】バックエンドをRenderにデプロイ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. https://render.com でSign up（GitHubアカウントで）
+
+2. 「New +」→「Web Service」をクリック
+
+3. GitHubリポジトリを接続して選択
+
+4. 設定：
+   - Name: x-bot-analyzer-api（任意）
+   - Runtime: Python 3
+   - Build Command: ./build.sh
+   - Start Command: gunicorn server:app
+   - Instance Type: Free
+
+5. Environment Variables（環境変数）を追加：
+   - Key: CLAUDE_API_KEY
+   - Value: （あなたのAPIキー）
+   ※ なくてもOK（ルールベース分析のみ動作）
+
+6. 「Create Web Service」をクリック
+
+7. デプロイ完了後、URLをメモ（例: https://x-bot-analyzer-api.onrender.com）
+
+
+【ステップ3】フロントエンドをVercelにデプロイ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. script.js を編集：
+
+   const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+       ? 'http://localhost:5000'
+       : 'https://x-bot-analyzer-api.onrender.com';  // ← RenderのURLに変更
+
+2. 変更をGitHubにプッシュ：
+
+   git add script.js
+   git commit -m "Update API URL"
+   git push
+
+3. https://vercel.com でSign up（GitHubアカウントで）
+
+4. 「Add New...」→「Project」をクリック
+
+5. GitHubリポジトリを選択
+
+6. 「Deploy」をクリック
+
+7. デプロイ完了！
+   → 表示されたURL（例: https://x-bot-analyzer.vercel.app）が公開URLです
+
+
+■ 完成！
+━━━━━━━━━━━━━━━━━━━━━━
+
+公開URL: https://x-bot-analyzer.vercel.app
+
+このURLを誰かに送れば、ブラウザで使えます！
+
+
+■ 注意点
+━━━━━━━━━━━━━━━━━━━━━━
+
+【Render無料プランの特徴】
+- 15分間アクセスがないとスリープ
+- 初回アクセス時に起動まで30秒程度かかる
+- 2回目以降は高速
+
+【対処法】
+- UptimeRobotなどで5分ごとにpingして常時起動
+- または有料プラン（$7/月）にアップグレード
+
+
+■ 更新方法
+━━━━━━━━━━━━━━━━━━━━━━
+
+コードを変更したら：
+
+1. git add .
+2. git commit -m "変更内容"
+3. git push
+
+→ RenderとVercelが自動的に再デプロイします！
+
+
+■ トラブルシューティング
+━━━━━━━━━━━━━━━━━━━━━━
+
+Q. Renderのビルドが失敗する
+
+A. build.sh に実行権限を付与：
+   chmod +x build.sh
+   git add build.sh
+   git commit -m "Add permission"
+   git push
+
+
+Q. 「サーバーとの通信に失敗しました」エラー
+
+A. script.js のAPI URLが正しいか確認
+   RenderのURLと一致しているか確認
+
+
+Q. ChromeDriverエラー
+
+A. Renderのログを確認
+   build.sh が正しく実行されているか確認
+
+
+Q. CORS エラー
+
+A. server.py で CORS(app) が設定されているか確認
+
+
+■ 詳細な手順
+━━━━━━━━━━━━━━━━━━━━━━
+
+DEPLOY.md を参照してください
+
+
+========================================
+デプロイ頑張ってください！
+========================================
